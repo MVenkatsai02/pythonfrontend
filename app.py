@@ -103,9 +103,7 @@ with st.sidebar:
     elif choice == "🔳 QR Display":
         st.session_state["ui_view"] = "QR_DISPLAY"
 
-    st.divider()
-    st.caption("Backend:")
-    st.code(BACKEND_URL)
+
 
 
 
