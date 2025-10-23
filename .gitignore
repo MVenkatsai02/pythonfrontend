@@ -1,0 +1,71 @@
+# -------------------------------
+# Python cache / build artifacts
+# -------------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.egg
+*.log
+
+# -------------------------------
+# Environment / virtual envs
+# -------------------------------
+venv/
+env/
+ENV/
+.venv/
+.idea/
+.vscode/
+.pytest_cache/
+.mypy_cache/
+.cache/
+.DS_Store
+
+# -------------------------------
+# Local databases / migrations
+# -------------------------------
+*.db
+*.sqlite3
+alembic.ini
+migrations/
+
+# -------------------------------
+# Environment variables / secrets
+# -------------------------------
+.env
+*.env
+.env.*
+.secret
+*.key
+config.json
+
+# -------------------------------
+# Build / distribution
+# -------------------------------
+dist/
+build/
+*.spec
+
+# -------------------------------
+# OS / Editor junk
+# -------------------------------
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+
+# -------------------------------
+# Render logs
+# -------------------------------
+render.yaml
+render-build.log
+render-deploy.log
+
+# -------------------------------
+# Jupyter / Streamlit temp
+# -------------------------------
+.ipynb_checkpoints/
+.streamlit/secrets.toml
