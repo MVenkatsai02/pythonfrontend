@@ -85,13 +85,15 @@ for k, v in DEFAULTS.items():
 with st.sidebar:
     st.markdown("## 🔗 Navigation")
     choice = st.radio(
-        "Go to",
-        ["👨‍💼 HR", "👷 Employee (QR only)", "🔳 QR Display"],
-        index=0 if st.session_state["ui_view"] == "HOME"
-        else 1 if st.session_state["ui_view"] in ["HR_AUTH", "HR_DASH"]
-        else 2 if st.session_state["ui_view"] == "EMPLOYEE"
-        else 3
+    "Go to",
+    ["👨‍💼 HR", "👷 Employee (QR only)", "🔳 QR Display"],
+    index=(
+        0 if st.session_state["ui_view"] in ["HR_AUTH", "HR_DASH", "HOME"]
+        else 1 if st.session_state["ui_view"] == "EMPLOYEE"
+        else 2
+    )   
     )
+
 
     if choice == "👨‍💼 HR":
         # if logged in, go to dashboard; else to auth
