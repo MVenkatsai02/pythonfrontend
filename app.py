@@ -485,49 +485,42 @@ elif st.session_state["ui_view"] == "EMPLOYEE":
 # --------------------------------------------------------------------------
 # QR DISPLAY (auto-refresh view)
 # --------------------------------------------------------------------------
-elif st.session_state["ui_view"] == "QR_DISPLAY":
-    st.title("🔳 QR Display — Auto Update")
+import streamlit as st
+import requests
+import qrcode
+from io import BytesIO
 
-    company_id = st.number_input("Company ID", min_value=1, value=1)
-    st.text_input(
-        "Frontend Base URL to embed in QR link (e.g., your Streamlit app URL)",
-        key="frontend_base_url",
-        placeholder="https://your-frontend.streamlit.app"
-    )
+# ✅ Your live backend and frontend URLs
+BACKEND_URL = "https://python-c5i8.onrender.com"
+FRONTEND_URL = "https://pythonfrontend.streamlit.app"  # Hardcoded, no need to type
 
-    st.caption(
-        "This screen checks the **current QR version** every 30 seconds. "
-        "If HR manually regenerates QR, it updates automatically. "
-        "Daily midnight (IST) rotation is handled by the backend."
-    )
+st.title("🔳 QR Display — Auto Update")
 
-    # 🔁 Auto-refresh every 30 seconds using Streamlit's built-in helper
-    from streamlit_autorefresh import st_autorefresh
-    count = st_autorefresh(interval=30 * 1000, key="qr_autorefresh")
+company_id = st.number_input("Company ID", min_value=1, step=1)
 
-    # --- Fetch current QR version ---
-    res = api_get(f"/qr/{company_id}/version")
-    ok, data = response_json_or_text(res)
+if st.button("Fetch Current QR"):
+    try:
+        res = requests.get(f"{BACKEND_URL}/qr/{company_id}/current")
+        if res.status_code == 200:
+            data = res.json()
+            token = data.get("token")
+            qr_link = f"{FRONTEND_URL}?company_id={company_id}&qr_token={token}"
 
-    if res and res.status_code == 200 and ok:
-        token = data["token"]
-        token_date = data["token_date"]
-        updated_at = data["updated_at"]
+            # ✅ generate real QR image here
+            qr = qrcode.QRCode(box_size=10, border=4)
+            qr.add_data(qr_link)
+            qr.make(fit=True)
+            img = qr.make_image(fill_color="black", back_color="white")
 
-        # Build deep link
-        params = {"company_id": company_id, "qr_token": token}
-        frontend = st.session_state["frontend_base_url"].rstrip("/") if st.session_state["frontend_base_url"] else ""
-        deep_link = f"{frontend}/?{urlencode(params)}" if frontend else f"/?{urlencode(params)}"
+            # ✅ convert to bytes and display
+            buf = BytesIO()
+            img.save(buf, format="PNG")
+            st.image(buf.getvalue(), caption=f"QR for {data.get('token_date', 'today')}", width=260)
+            st.success("QR displayed successfully ✅")
 
-        # Draw QR only if token changed
-        changed = token != st.session_state.get("qr_last_token")
-        if changed:
-            st.session_state["qr_last_token"] = token
-
-        img = qrcode.make(deep_link)
-        st.image(img, caption=f"Token Date: {token_date}", width=300)
-        st.markdown(f"🔗 **Employee Deep Link:** `{deep_link}`")
-        st.caption(f"Last backend update: {updated_at}")
-
-    else:
-        st.error(data)
+            st.write("Scannable URL:")
+            st.write(qr_link)
+        else:
+            st.error(f"Failed to fetch QR: {res.text}")
+    except Exception as e:
+        st.error(f"Error: {e}")
