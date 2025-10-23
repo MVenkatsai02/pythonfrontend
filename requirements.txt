@@ -4,3 +4,4 @@ pandas
 qrcode
 Pillow
 openpyxl
+streamlit-autorefresh
