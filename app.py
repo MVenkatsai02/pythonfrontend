@@ -110,7 +110,7 @@ with st.sidebar:
 # ------------------------------------------------------------------------------
 # HR AUTH (Register or Login) — gated
 # ------------------------------------------------------------------------------
-elif st.session_state["ui_view"] == "HR_AUTH":
+if st.session_state["ui_view"] == "HR_AUTH":
     st.title("👨‍💼 HR Access")
 
     tab_register, tab_login = st.tabs(["Register", "Login"])
