@@ -86,16 +86,14 @@ with st.sidebar:
     st.markdown("## 🔗 Navigation")
     choice = st.radio(
         "Go to",
-        ["🏠 Home", "👨‍💼 HR", "👷 Employee (QR only)", "🔳 QR Display"],
+        ["👨‍💼 HR", "👷 Employee (QR only)", "🔳 QR Display"],
         index=0 if st.session_state["ui_view"] == "HOME"
         else 1 if st.session_state["ui_view"] in ["HR_AUTH", "HR_DASH"]
         else 2 if st.session_state["ui_view"] == "EMPLOYEE"
         else 3
     )
 
-    if choice == "🏠 Home":
-        st.session_state["ui_view"] = "HOME"
-    elif choice == "👨‍💼 HR":
+    if choice == "👨‍💼 HR":
         # if logged in, go to dashboard; else to auth
         st.session_state["ui_view"] = "HR_DASH" if st.session_state["hr_token"] else "HR_AUTH"
     elif choice == "👷 Employee (QR only)":
@@ -107,22 +105,7 @@ with st.sidebar:
     st.caption("Backend:")
     st.code(BACKEND_URL)
 
-# ------------------------------------------------------------------------------
-# HOME
-# ------------------------------------------------------------------------------
-if st.session_state["ui_view"] == "HOME":
-    st.title("Smart QR HRMS — Frontend")
-    st.write("""
-    Welcome! This frontend is tailored for your deployed FastAPI backend on Render.
 
-    **Three perspectives:**
-    - **HR**: Register/Login → Create Company (with geofence) → Add Employees (Excel/manual)
-      → Regenerate QR → Monitor → Reports → Leave decisions → Export Excel
-    - **Employee**: Accessible only via **QR scan**. Enter credentials + share location to **Check-In/Check-Out**, apply **Leave**.
-    - **QR Display**: Shows scannable QR for employees. Polls every **30 seconds** for HR manual regeneration and naturally updates after midnight (IST).
-    """)
-
-    st.info("Use the left sidebar to navigate. Start with **HR** to register/login.")
 
 # ------------------------------------------------------------------------------
 # HR AUTH (Register or Login) — gated
@@ -278,9 +261,9 @@ elif st.session_state["ui_view"] == "HR_DASH":
             else:
                 st.error(data)
 
-    # ------------- QR -------------
+# ------------- QR -------------
     elif hr_tab == "🔳 QR":
-        st.subheader("QR Management & Display Link")
+        st.subheader("QR Management & Display")
 
         # Get my company
         res_company = api_get("/company/me", headers=auth_headers())
@@ -289,22 +272,19 @@ elif st.session_state["ui_view"] == "HR_DASH":
             company_id = datac["id"]
             st.info(f"Company ID: **{company_id}**")
 
-            st.text_input(
-                "Frontend Base URL to embed into QR deep-link (e.g., your Streamlit URL)",
-                key="frontend_base_url",
-                placeholder="https://your-frontend.streamlit.app"
-            )
+            # Use pre-set frontend base URL (hardcoded for QR generation)
+            FRONTEND_URL = "https://pythonfrontend.streamlit.app"  # ← replace with your deployed Streamlit URL
 
-            col1, col2, col3 = st.columns(3)
+            col1, col2 = st.columns(2)
             with col1:
-                if st.button("Fetch Current QR"):
+                if st.button("Fetch Current QR", key="fetch_qr_btn"):
                     r = api_get(f"/qr/{company_id}/current")
                     ok, data = response_json_or_text(r)
                     if r and r.status_code == 200 and ok:
                         token = data["token"]
                         st.session_state["qr_last_token"] = token
                         params = {"company_id": company_id, "qr_token": token}
-                        deep_link = f"{st.session_state['frontend_base_url'].rstrip('/')}/?{urlencode(params)}" if st.session_state["frontend_base_url"] else f"/?{urlencode(params)}"
+                        deep_link = f"{FRONTEND_URL}/?{urlencode(params)}"
                         # Generate QR
                         img = qrcode.make(deep_link)
                         st.image(img, caption=f"Current Token Date: {data['token_date']}", width=260)
@@ -313,7 +293,7 @@ elif st.session_state["ui_view"] == "HR_DASH":
                         st.error(data)
 
             with col2:
-                if st.button("Regenerate QR Now"):
+                if st.button("Regenerate QR Now", key="regen_qr_btn"):
                     r = api_post("/qr/regenerate", headers=auth_headers())
                     ok, data = response_json_or_text(r)
                     if r and r.status_code == 200 and ok:
@@ -321,11 +301,10 @@ elif st.session_state["ui_view"] == "HR_DASH":
                     else:
                         st.error(data)
 
-            with col3:
-                st.caption("Display page is in the **QR Display** section (left sidebar). It polls every 30s and redraws if HR changed the token.")
-
+            st.caption("ℹ️ The QR automatically refreshes daily at midnight IST and can be viewed in the **QR Display** section.")
         else:
-            st.error("Please create/view company first.")
+            st.error("Please create or view your company first.")
+
 
     # ------------- LEAVES -------------
     elif hr_tab == "📝 Leaves":
